@@ -1,0 +1,33 @@
+{
+  "timestamp": "2026-11-01T16:14:33Z",
+  "total_records_analyzed": 2362160,
+  "total_unique_uids_tracked": 171784,
+  "total_cross_bank_violations": 0,
+  "status": "VERIFIED_PASS",
+  "scenarios": {
+    "S1": {
+      "records_scanned": 590540,
+      "unique_cardholder_uids": 42946,
+      "cross_bank_leakages": 0,
+      "status": "PASS"
+    },
+    "S3_a0.1": {
+      "records_scanned": 590540,
+      "unique_cardholder_uids": 42946,
+      "cross_bank_leakages": 0,
+      "status": "PASS"
+    },
+    "S3_a0.5": {
+      "records_scanned": 590540,
+      "unique_cardholder_uids": 42946,
+      "cross_bank_leakages": 0,
+      "status": "PASS"
+    },
+    "S3_a1.0": {
+      "records_scanned": 590540,
+      "unique_cardholder_uids": 42946,
+      "cross_bank_leakages": 0,
+      "status": "PASS"
+    }
+  }
+}

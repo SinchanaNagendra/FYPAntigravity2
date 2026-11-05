@@ -44,42 +44,59 @@ def fig_privacy_utility(results_dir: Path, output_dir: Path) -> None:
     with open(dp_files[0]) as f:
         data = json.load(f)
 
-    results = [r for r in data.get("results", {}).get(
-        "results", []) if "error" not in r]
+    results = [r for r in data.get("results", {}).get("results", []) if "error" not in r]
     if not results:
         return
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
     colors = {"logistic_regression": "#60a5fa", "cnn": "#34d399"}
 
     for ax, model_type in zip(axes, ["logistic_regression", "cnn"]):
         model_results = [r for r in results if r.get("model") == model_type]
+        
+        # Identify No-DP baseline
+        no_dp = [r for r in model_results if not r.get("use_dp") or r.get("noise_multiplier", 0.0) == 0.0]
+        no_dp_pr = no_dp[0].get("final_test_pr_auc_mean") if no_dp else None
+
         epsilons, pr_aucs, labels = [], [], []
         for r in model_results:
+            if not r.get("use_dp") or r.get("noise_multiplier", 0.0) == 0.0:
+                continue
             ps = r.get("privacy_summary", {})
             cum_e = ps.get("cumulative_epsilon")
             pr = r.get("final_test_pr_auc_mean")
-            if pr:
-                epsilons.append(cum_e if cum_e else 100)  # ∞ mapped to 100
+            if cum_e and pr:
+                epsilons.append(cum_e)
                 pr_aucs.append(pr)
-                labels.append(r.get("noise_label", ""))
+                sigma = r.get("noise_multiplier", 0)
+                labels.append(f"σ={sigma}\n(ε={cum_e:.1f})")
 
         if epsilons:
-            ax.scatter(epsilons, pr_aucs, s=80, color=colors.get(model_type, "#f472b6"),
-                       zorder=5)
-            ax.plot(epsilons, pr_aucs, "--", alpha=0.5,
-                    color=colors.get(model_type, "#f472b6"))
+            # Sort by epsilon ascending
+            sort_idx = np.argsort(epsilons)
+            epsilons = [epsilons[i] for i in sort_idx]
+            pr_aucs = [pr_aucs[i] for i in sort_idx]
+            labels = [labels[i] for i in sort_idx]
+
+            ax.plot(epsilons, pr_aucs, "o-", color=colors.get(model_type, "#f472b6"),
+                    linewidth=2, markersize=7, label="DP-SGD (SecAgg+RDP)")
             for i, lbl in enumerate(labels):
                 ax.annotate(lbl, (epsilons[i], pr_aucs[i]), textcoords="offset points",
-                            xytext=(5, 5), fontsize=9, color="#94a3b8")
+                            xytext=(0, 10), ha="center", fontsize=8, color="#94a3b8")
 
-        ax.set_xlabel("Cumulative ε (100 = ∞)")
-        ax.set_ylabel("PR-AUC (test)")
-        ax.set_title(model_type.replace("_", " ").title())
-        ax.grid(True, alpha=0.2)
+        # Plot No-DP upper bound reference line
+        if no_dp_pr is not None:
+            ax.axhline(no_dp_pr, color="#f87171", linestyle="--", linewidth=1.5,
+                       label=f"No-DP Baseline (PR-AUC={no_dp_pr:.4f})")
 
-    plt.suptitle(
-        "Privacy–Utility Trade-off (DP-SGD, N=5 banks, S1 IID)", y=1.02)
+        ax.set_xscale("log")
+        ax.set_xlabel("Privacy Budget ε (Log Scale, δ=1e-5) — Higher ε = Less Noise")
+        ax.set_ylabel("PR-AUC (Test)")
+        ax.set_title(f"{model_type.replace('_', ' ').title()} Privacy–Utility Trade-off")
+        ax.grid(True, alpha=0.2, which="both")
+        ax.legend(loc="lower right")
+
+    plt.suptitle("Privacy–Utility Trade-off (DP-SGD across N=5 banks, S1 IID)", y=1.02)
     plt.tight_layout()
     out = output_dir / "fig1_privacy_utility_curve.png"
     plt.savefig(out, dpi=150, bbox_inches="tight")
@@ -97,7 +114,12 @@ def fig_learning_curves(results_dir: Path, output_dir: Path) -> None:
     if not fl_files:
         print("[figures] No FL results for learning curves")
         return
-    with open(fl_files[0]) as f:
+    
+    # Select multi-round iterative model (LR or CNN) instead of 1-round tree
+    iterative_files = [f for f in fl_files if "logistic_regression" in f.name or "cnn" in f.name]
+    target_file = iterative_files[0] if iterative_files else fl_files[0]
+    
+    with open(target_file) as f:
         data = json.load(f)
 
     rounds = data.get("results", {}).get("rounds", [])
@@ -106,15 +128,18 @@ def fig_learning_curves(results_dir: Path, output_dir: Path) -> None:
 
     round_nums = [r["round_num"] for r in rounds]
     pr_aucs = [r.get("mean_pr_auc") for r in rounds]
+    model_name = data.get("config", {}).get("model", "Model").replace("_", " ").title()
 
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.plot(round_nums, pr_aucs, "o-",
-            color="#60a5fa", linewidth=2, markersize=5)
-    ax.set_xlabel("Round")
-    ax.set_ylabel("Mean PR-AUC across banks")
-    ax.set_title("Federated Learning Convergence (PR-AUC per round)")
+            color="#60a5fa", linewidth=2, markersize=5, label=f"Federated {model_name} (Val PR-AUC)")
+    ax.set_xlabel("Federated Round")
+    ax.set_ylabel("Validation PR-AUC (Mean across banks)")
+    ax.set_title(f"Federated Learning Convergence ({len(rounds)} Rounds, N=5 Banks, S1 IID)")
     ax.grid(True, alpha=0.2)
-    ax.set_ylim(0, 1)
+    ax.set_ylim(0.2, 0.5)
+    ax.set_xticks(round_nums)
+    ax.legend(loc="lower right")
 
     plt.tight_layout()
     out = output_dir / "fig4_learning_curves.png"

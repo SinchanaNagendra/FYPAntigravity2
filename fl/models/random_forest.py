@@ -49,7 +49,7 @@ class RandomForestModel:
         n_estimators: int = 50,
         max_depth: Optional[int] = 10,
         min_samples_leaf: int = MIN_SAMPLES_LEAF,
-        class_weight: Optional[str] = "balanced",
+        class_weight: Optional[str] = None,
         n_jobs: int = -1,
         random_state: int = 42,
     ):

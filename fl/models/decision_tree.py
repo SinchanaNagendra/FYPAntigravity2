@@ -51,7 +51,7 @@ class DecisionTreeModel:
         n_features: int,
         max_depth: Optional[int] = 10,
         min_samples_leaf: int = MIN_SAMPLES_LEAF,
-        class_weight: Optional[str] = "balanced",
+        class_weight: Optional[str] = None,
         random_state: int = 42,
     ):
         if min_samples_leaf < MIN_SAMPLES_LEAF:

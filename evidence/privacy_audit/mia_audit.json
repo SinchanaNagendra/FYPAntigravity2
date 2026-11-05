@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-11-01T16:19:10Z",
+  "experiment": "Membership Inference Attack Evaluation (Loss Threshold)",
+  "dataset": "IEEE-CIS Fraud Detection (Bank 0, S1)",
+  "members_count": 5000,
+  "non_members_count": 5000,
+  "clean_model": {
+    "use_dp": false,
+    "epsilon": "infinity",
+    "attack_auc": 0.52938094,
+    "mia_advantage": 0.058761880000000044,
+    "privacy_risk": "Vulnerable to loss-based membership inference"
+  },
+  "dp_protected_model": {
+    "use_dp": true,
+    "epsilon": 7.23,
+    "delta": 1e-05,
+    "attack_auc": 0.51551026,
+    "mia_advantage": 0.031020519999999996,
+    "privacy_risk": "Negligible (attack performance reduced to near-random guessing)"
+  },
+  "finding": "DP-SGD reduces Membership Inference Attack AUC from 0.5294 to 0.5155, driving MIA advantage to 0.0310."
+}

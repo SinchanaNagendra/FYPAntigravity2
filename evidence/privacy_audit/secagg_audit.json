@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-11-01T16:14:33Z",
+  "n_banks": 5,
+  "elements_per_bank": 500,
+  "mask_cancellation_error": 3.783836977078181e-07,
+  "quantization_bound": 1e-05,
+  "masked_vs_true_correlation": 0.007334020998415406,
+  "cancellation_exact": true,
+  "mask_looks_random": true,
+  "status": "VERIFIED_PASS"
+}

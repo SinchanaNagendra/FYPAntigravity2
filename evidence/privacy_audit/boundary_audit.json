@@ -1,0 +1,102 @@
+{
+  "timestamp": "2026-11-01T16:14:33Z",
+  "total_payload_bytes_analyzed": 859066,
+  "models_verified": 5,
+  "overall_status": "VERIFIED_PASS",
+  "model_audits": {
+    "LogisticRegression": {
+      "payload_bytes": 591,
+      "param_shapes": [
+        [
+          1,
+          100
+        ],
+        [
+          1
+        ]
+      ],
+      "contains_sample_dimension": false,
+      "forbidden_terms_found": [],
+      "status": "PASS"
+    },
+    "CNN": {
+      "payload_bytes": 846230,
+      "param_shapes": [
+        [
+          32,
+          1,
+          5
+        ],
+        [
+          32
+        ],
+        [
+          64,
+          32,
+          3
+        ],
+        [
+          64
+        ],
+        [
+          128,
+          1600
+        ],
+        [
+          128
+        ],
+        [
+          1,
+          128
+        ],
+        [
+          1
+        ]
+      ],
+      "contains_sample_dimension": false,
+      "forbidden_terms_found": [],
+      "status": "PASS"
+    },
+    "DecisionTree": {
+      "payload_bytes": 1675,
+      "param_shapes": [
+        [
+          1520
+        ]
+      ],
+      "contains_sample_dimension": false,
+      "forbidden_terms_found": [],
+      "status": "PASS"
+    },
+    "RandomForest": {
+      "payload_bytes": 7132,
+      "param_shapes": [
+        [
+          6977
+        ]
+      ],
+      "contains_sample_dimension": false,
+      "forbidden_terms_found": [],
+      "status": "PASS"
+    },
+    "GaussianNB": {
+      "payload_bytes": 3438,
+      "param_shapes": [
+        [
+          2
+        ],
+        [
+          2,
+          100
+        ],
+        [
+          2,
+          100
+        ]
+      ],
+      "contains_sample_dimension": false,
+      "forbidden_terms_found": [],
+      "status": "PASS"
+    }
+  }
+}

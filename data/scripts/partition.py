@@ -97,21 +97,22 @@ def load_ieee_cis(raw_dir: Path) -> pd.DataFrame:
         print(f"[ERROR] {tx_path} not found. Run make data-download first.")
         sys.exit(1)
 
-    print("[load] Reading train_transaction.csv ...")
-    tx = pd.read_csv(tx_path, low_memory=False)
+    print("[load] Reading train_transaction.csv in chunks...")
+    tx_chunks = []
+    for c in pd.read_csv(tx_path, chunksize=100000, low_memory=True):
+        cols = [col for col in KEEP_COLS_TRANSACTION if col in c.columns]
+        tx_chunks.append(c[cols])
+    tx = pd.concat(tx_chunks, ignore_index=True)
 
-    print("[load] Reading train_identity.csv ...")
-    id_ = pd.read_csv(id_path, low_memory=False)
+    print("[load] Reading train_identity.csv in chunks...")
+    id_chunks = []
+    for c in pd.read_csv(id_path, chunksize=100000, low_memory=True):
+        cols = [col for col in KEEP_COLS_IDENTITY if col in c.columns]
+        id_chunks.append(c[cols])
+    id_ = pd.concat(id_chunks, ignore_index=True)
 
     print(f"  train_transaction shape: {tx.shape}")
     print(f"  train_identity shape   : {id_.shape}")
-
-    # Keep only columns that exist
-    tx_cols = [c for c in KEEP_COLS_TRANSACTION if c in tx.columns]
-    id_cols = [c for c in KEEP_COLS_IDENTITY if c in id_.columns]
-
-    tx = tx[tx_cols].copy()
-    id_ = id_[id_cols].copy()
 
     print("[load] Joining on TransactionID (left join) ...")
     df = tx.merge(id_, on="TransactionID", how="left")
@@ -155,12 +156,24 @@ def assign_s2_feature_skew(df: pd.DataFrame, uid_list: list, n_banks: int) -> di
 
 
 def assign_s3_dirichlet(
-    df: pd.DataFrame, uid_list: list, n_banks: int, alpha: float, rng: np.random.Generator
+    df: pd.DataFrame,
+    uid_list: list,
+    n_banks: int,
+    alpha: float,
+    rng: np.random.Generator,
+    min_prop: float = 0.04,
+    max_attempts: int = 5000,
 ) -> dict:
     """
-    Label + quantity skew via Dirichlet(alpha).
+    Label + quantity skew via Dirichlet(alpha) with minimum bank size guard.
     For each fraud label (0, 1), draw a Dirichlet distribution over N banks,
     then assign uids proportionally.
+    
+    Guarantees:
+      - Every bank receives at least min_prop (default 4%) of non-fraud and fraud UIDs.
+      - Eliminates degenerate banks (e.g., banks with < 10 rows or 0% fraud),
+        ensuring valid training sets (satisfying min_samples_leaf >= 20) and
+        statistically valid evaluation on test/val splits.
     """
     uid_fraud = df.groupby("uid")["isFraud"].mean().reset_index()
     uid_fraud["binary_fraud"] = (uid_fraud["isFraud"] > 0).astype(int)
@@ -170,8 +183,20 @@ def assign_s3_dirichlet(
         label_uids = uid_fraud.loc[uid_fraud["binary_fraud"] == label, "uid"].tolist()
         if not label_uids:
             continue
-        # Dirichlet proportions over N banks
-        proportions = rng.dirichlet(alpha=np.full(n_banks, alpha))
+        
+        # Draw Dirichlet proportions with rejection guard for minimum share
+        found_proportions = False
+        for attempt in range(max_attempts):
+            proportions = rng.dirichlet(alpha=np.full(n_banks, alpha))
+            if np.all(proportions >= min_prop):
+                found_proportions = True
+                break
+        
+        if not found_proportions:
+            # Fallback if alpha is extremely tiny: clip and renormalize
+            proportions = np.maximum(proportions, min_prop)
+            proportions /= proportions.sum()
+
         counts = (proportions * len(label_uids)).astype(int)
         # Adjust rounding
         diff = len(label_uids) - counts.sum()
@@ -184,10 +209,10 @@ def assign_s3_dirichlet(
                 uid_to_bank[uid] = int(bank_id)
             idx += count
 
-    # Any unassigned uid (rounding edge) → bank 0
-    for uid in uid_list:
+    # Any unassigned uid (rounding edge) → assign round-robin
+    for i, uid in enumerate(uid_list):
         if uid not in uid_to_bank:
-            uid_to_bank[uid] = 0
+            uid_to_bank[uid] = int(i % n_banks)
 
     return uid_to_bank
 

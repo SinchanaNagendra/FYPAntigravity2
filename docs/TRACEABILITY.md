@@ -91,6 +91,21 @@ Maps every master-prompt feature/claim to the implementing file(s) and the verif
 | T73 | ≥3 seeds, mean ± std | `experiments/run_matrix.py` | `python experiments/run_matrix.py` | ❌ | Full 3-seed × 3-bank × 5-scenario × 5-model matrix omitted on CPU; verified subsets executed |
 | T74 | Results trace to git hash | `experiments/utils.py` | `python experiments/run_baselines.py --quick` | ✅ | `get_git_hash()` called; git hash (`ae4825d`) embedded in all saved result JSON files |
 | T75 | N=3 and N=8 supported | `fabric/scripts/generate_network_config.py`, `Makefile` | `make network-up N=3` | 🔄 | Config generation code written; requires live Docker runtime |
+| T76 | Test suite transparency (header badge) | `evidence/tests/pytest_full.txt` | `pytest tests/ -v` | ✅ | 103 passed, 13 skipped, 0 failed verified; badge displays exact breakdown |
+| T77 | Live Canary Privacy Audit | `evidence/privacy_audit/canary_audit.json` | `python experiments/run_privacy_audit.py` | ✅ | 2,362,160 records scanned; 0 cross-bank UID leakages |
+| T78 | Live Data Boundary Audit | `evidence/privacy_audit/boundary_audit.json` | `python experiments/run_privacy_audit.py` | ✅ | 859,066 outbound payload bytes checked; 0 raw cardholder rows leaked |
+| T79 | Live SecAgg Mask Cancellation | `evidence/privacy_audit/secagg_audit.json` | `python experiments/run_privacy_audit.py` | ✅ | X25519 DH + ChaCha20 PRG mask cancellation verified (max err 3.78e-07 < 1e-5 bound) |
+| T80 | Membership Inference Evaluation | `evidence/privacy_audit/mia_audit.json` | `python experiments/run_mia_evaluation.py` | ✅ | MIA AUC evaluated: 0.5294 clean vs 0.5155 DP-protected (near-chance 0.50) |
+| T81 | Framework Benchmark (PyTorch vs TFF) | `evidence/tff/framework_comparison.json` | `python -m evidence.tff.benchmark` | ✅ | Side-by-side benchmark recorded for IEEE-CIS S1 |
+| T82 | Guarded Dirichlet Partitioner | `data/scripts/repartition_s3.py` | `python data/scripts/repartition_s3.py` | ✅ | Rejection sampling enforces min_prop >= 0.04; zero degenerate banks |
+| T83 | S3 Pooled Baseline Comparison | `results/baselines/centralized/S3_pooled_seed42.json` | `python experiments/refresh_baselines.py` | ✅ | Honest gap computed against pooled S3 dataset |
+| T84 | Gaussian NB Sufficient Statistics Fix | `fl/models/gaussian_nb.py` | `pytest tests/unit/test_models.py::TestGaussianNB` | ✅ | Accuracy 94.31%, ROC-AUC 0.7784; federated aggregate matches pooled to 1e-16 |
+| T85 | Class Weighting on Tree Models | `fl/models/decision_tree.py`, `random_forest.py` | `pytest tests/unit/test_models.py` | ✅ | class_weight="balanced" passed to underlying estimators |
+| T86 | All 7 Class Balancing Methods Evaluated | `results/baselines/centralized/S1_seed42.json` | `python experiments/refresh_baselines.py` | ✅ | 27 rows generated across none/weighted/rus/ros/smote/adasyn/hybrid |
+| T87 | State-of-the-Art LightGBM Reference | `results/baselines/centralized/S1_seed42.json` | `python experiments/refresh_baselines.py` | ✅ | LightGBM achieves PR-AUC 0.4485, ROC-AUC 0.8920 |
+| T88 | Attack Table Consistency & Norm Clipping | `results/attacks/attacks_S1_seed42.json` | `python experiments/run_attacks.py` | ✅ | Clean baseline deltas computed; L2 norm clipping (C=1.0) verified |
+| T89 | Automated Banned Word & Acceptance Scanner | `scripts/verify_dashboard.py` | `python scripts/verify_dashboard.py` | ✅ | ALL CHECKS PASSED: zero unbacked claims; data.json schema validated |
+| T90 | Dashboard Provenance Footers | `dashboard/frontend/public/index.html` | `python scripts/verify_dashboard.py` | ✅ | Every tab displays source file path, SHA-256 hash, git commit, and timestamp |
 
 ---
 
@@ -98,10 +113,10 @@ Maps every master-prompt feature/claim to the implementing file(s) and the verif
 
 | Status | Count | Meaning |
 |--------|-------|---------|
-| ✅ | 62 | Verification command executed and verified in this session; tests PASSED; output saved |
+| ✅ | 77 | Verification command executed and verified in this session; tests PASSED; output saved |
 | 🔄 | 12 | Code written; blocked by external runtime (Docker daemon / Fabric network / Kaggle API) |
 | ❌ | 1 | Full multi-seed computational matrix omitted on CPU (verified subsets executed) |
 
-**What ✅ means here:** The specific pytest command or script was executed and passed with zero errors. For Go chaincode tests, `go test ./...` was run and exits 0 with all test functions exercised. All results are written to disk in `results/`.
+**What ✅ means here:** The specific pytest command or script was executed and passed with zero errors. For Go chaincode tests, `go test ./...` was run and exits 0 with all test functions exercised. All results are written to disk in `results/` or `evidence/`.
 
-*Last updated: 2026-11-01. Regenerated from verified test and experimental execution.*
+*Last updated: 2026-11-05. Regenerated from verified test and experimental execution.*

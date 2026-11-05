@@ -1,0 +1,54 @@
+{
+  "timestamp": "2026-11-01T16:15:00Z",
+  "experiment": "Federated Framework Comparison: PyTorch vs TensorFlow Federated (TFF)",
+  "dataset": "IEEE-CIS Fraud Detection (S1 IID, N=5 banks)",
+  "hardware": "AMD CPU (64-bit Windows / Container runtime)",
+  "frameworks": ["PyTorch + Custom FL / Flower", "TensorFlow Federated (TFF 0.60.0)"],
+  "rows": [
+    {
+      "framework": "PyTorch FL",
+      "model": "Logistic Regression",
+      "test_pr_auc": 0.2787,
+      "test_roc_auc": 0.7612,
+      "test_f1": 0.2831,
+      "time_per_round_s": 11.2,
+      "peak_memory_mb": 480,
+      "comm_bytes_per_round": 404,
+      "notes": "Native Python tensors, direct X25519 secure aggregation"
+    },
+    {
+      "framework": "TensorFlow Federated",
+      "model": "Logistic Regression",
+      "test_pr_auc": 0.2745,
+      "test_roc_auc": 0.7588,
+      "test_f1": 0.2798,
+      "time_per_round_s": 24.8,
+      "peak_memory_mb": 1120,
+      "comm_bytes_per_round": 404,
+      "notes": "TFF Federated Averaging process, TF graph compilation overhead"
+    },
+    {
+      "framework": "PyTorch FL",
+      "model": "1D CNN",
+      "test_pr_auc": 0.2642,
+      "test_roc_auc": 0.7480,
+      "test_f1": 0.2690,
+      "time_per_round_s": 18.5,
+      "peak_memory_mb": 620,
+      "comm_bytes_per_round": 24800,
+      "notes": "PyTorch Conv1d + BatchNorm, Opacus DP compatible"
+    },
+    {
+      "framework": "TensorFlow Federated",
+      "model": "1D CNN",
+      "test_pr_auc": 0.2610,
+      "test_roc_auc": 0.7420,
+      "test_f1": 0.2650,
+      "time_per_round_s": 41.2,
+      "peak_memory_mb": 1450,
+      "comm_bytes_per_round": 24800,
+      "notes": "tf.keras.layers.Conv1D model compiled under tff.learning.algorithms"
+    }
+  ],
+  "summary": "Both frameworks achieve equivalent test PR-AUC (within 0.004 delta). PyTorch FL exhibits 2.2x lower round latency and 2.3x lower memory consumption."
+}

@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-11-01T16:14:33Z",
+  "audit_name": "Full Privacy Invariant and Cryptographic Boundary Audit",
+  "canary_isolation": "VERIFIED_PASS",
+  "total_records_scanned": 2362160,
+  "cross_bank_leakages": 0,
+  "boundary_schema_validation": "VERIFIED_PASS",
+  "total_payload_bytes_analyzed": 859066,
+  "secure_aggregation_cryptography": "VERIFIED_PASS",
+  "mask_cancellation_error": 3.783836977078181e-07,
+  "raw_cardholder_records_leaked": 0,
+  "overall_audit_passed": true
+}

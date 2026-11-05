@@ -35,10 +35,11 @@ class GaussianNBModel:
     Global model is reconstructed from the aggregate of all banks' statistics.
     """
 
-    def __init__(self, n_features: int, classes: list[int] = None):
+    def __init__(self, n_features: int, classes: list[int] = None, var_smoothing: float = 1e-1):
         self.n_features = n_features
         self.classes = classes or [0, 1]
         self.n_classes = len(self.classes)
+        self.var_smoothing = var_smoothing
 
         # Per-class sufficient statistics (accumulated locally)
         self._counts = np.zeros(self.n_classes, dtype=np.int64)
@@ -76,7 +77,7 @@ class GaussianNBModel:
             return
         self._priors = self._counts / total
         self._means = np.zeros_like(self._sum)
-        self._vars = np.ones_like(self._sum)  # default var=1 to avoid division by zero
+        self._vars = np.ones_like(self._sum)
 
         for k in range(self.n_classes):
             n = self._counts[k]
@@ -85,7 +86,11 @@ class GaussianNBModel:
             mu = self._sum[k] / n
             self._means[k] = mu
             var = self._sum_sq[k] / n - mu ** 2
-            self._vars[k] = np.clip(var, 1e-9, None)
+            self._vars[k] = np.maximum(var, 0.0)
+
+        # Global variance smoothing to prevent likelihood collapse on sparse tabular features
+        max_var = np.max(self._vars) if np.max(self._vars) > 0 else 1.0
+        self._vars += self.var_smoothing * max_var
 
         self._fitted = True
 
